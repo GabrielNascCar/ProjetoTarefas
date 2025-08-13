@@ -1,6 +1,8 @@
 package org.projeto.gerenciadortarefa.service;
 
 import jakarta.transaction.Transactional;
+import org.projeto.gerenciadortarefa.exceptions.TarefaNaoEncontradaException;
+import org.projeto.gerenciadortarefa.exceptions.ValidacaoException;
 import org.projeto.gerenciadortarefa.model.Situacao;
 import org.projeto.gerenciadortarefa.model.Tarefa;
 import org.projeto.gerenciadortarefa.repository.TarefaRepository;
@@ -17,6 +19,9 @@ public class TarefaService {
 
     @Transactional
     public Tarefa criarTarefa(Tarefa tarefa) {
+        if (tarefa.getTitulo() == null || tarefa.getTitulo().isBlank()) {
+            throw new ValidacaoException("Título é obrigatório");
+        }
         tarefa.setSituacao(Situacao.EM_ANDAMENTO);
         return tarefaRepository.save(tarefa);
     }
@@ -27,20 +32,23 @@ public class TarefaService {
 
     @Transactional
     public Tarefa atualizarTarefa(Long id, Tarefa tarefaAtualizada) {
-        Tarefa tarefa = tarefaRepository.findById(id).orElseThrow();
-        tarefa.setTitulo(tarefaAtualizada.getTitulo());
-        tarefa.setSituacao(tarefaAtualizada.getSituacao());
-        tarefa.setDescricao(tarefaAtualizada.getDescricao());
-        tarefa.setDeadline(tarefaAtualizada.getDeadline());
-        tarefa.setPrioridade(tarefaAtualizada.getPrioridade());
-        tarefa.setResponsavel(tarefaAtualizada.getResponsavel());
-        return tarefaRepository.save(tarefa);
+        return tarefaRepository.findById(id)
+                .map(existing -> {
+                    existing.setTitulo(tarefaAtualizada.getTitulo());
+                    existing.setDescricao(tarefaAtualizada.getDescricao());
+                    existing.setResponsavel(tarefaAtualizada.getResponsavel());
+                    existing.setPrioridade(tarefaAtualizada.getPrioridade());
+                    existing.setDeadline(tarefaAtualizada.getDeadline());
+                    existing.setSituacao(tarefaAtualizada.getSituacao());
+                    return tarefaRepository.save(existing);
+                })
+                .orElseThrow(() -> new TarefaNaoEncontradaException(id));
     }
 
     @Transactional
     public void deletarTarefa(Long id) {
         if (!tarefaRepository.existsById(id)) {
-            throw new RuntimeException("Tarefa não encontrada");
+            throw new TarefaNaoEncontradaException(id);
         }
         tarefaRepository.deleteById(id);
     }
