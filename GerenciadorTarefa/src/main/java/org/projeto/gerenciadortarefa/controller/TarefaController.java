@@ -1,5 +1,6 @@
 package org.projeto.gerenciadortarefa.controller;
 
+import org.projeto.gerenciadortarefa.dto.TarefaDTO;
 import org.projeto.gerenciadortarefa.model.Tarefa;
 import org.projeto.gerenciadortarefa.service.TarefaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -18,23 +20,28 @@ public class TarefaController {
     private TarefaService tarefaService;
 
     @PostMapping
-    public ResponseEntity<Tarefa> create(@RequestBody Tarefa tarefa) {
+    public ResponseEntity<TarefaDTO> create(@RequestBody TarefaDTO dto) {
+        Tarefa tarefa = dto.toEntity();
         Tarefa novaTarefa = tarefaService.criarTarefa(tarefa);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novaTarefa);
+        return ResponseEntity.status(HttpStatus.CREATED).body(TarefaDTO.fromEntity(novaTarefa));
     }
 
     @GetMapping
-    public ResponseEntity<List<Tarefa>> listarTodas() {
+    public ResponseEntity<List<TarefaDTO>> listarTodas() {
         List<Tarefa> tarefas = tarefaService.listarTodasTarefas();
-        return ResponseEntity.ok(tarefas);
+        List<TarefaDTO> dtos = tarefas.stream()
+                .map(TarefaDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Tarefa> atualizarTarefa(
+    public ResponseEntity<TarefaDTO> atualizarTarefa(
             @PathVariable Long id,
-            @RequestBody Tarefa tarefaAtualizada) {
-        Tarefa tarefa = tarefaService.atualizarTarefa(id, tarefaAtualizada);
-        return ResponseEntity.ok(tarefa);
+            @RequestBody TarefaDTO dto) {
+        Tarefa tarefa = dto.toEntity();
+        Tarefa tarefaAtualizada = tarefaService.atualizarTarefa(id, tarefa);
+        return ResponseEntity.ok(TarefaDTO.fromEntity(tarefaAtualizada));
     }
 
     @DeleteMapping("/{id}")
