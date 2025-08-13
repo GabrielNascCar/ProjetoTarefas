@@ -33,7 +33,6 @@ public class Tarefa {
     private LocalDate deadline;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Situacao situacao = Situacao.EM_ANDAMENTO;
 }
 
