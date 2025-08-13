@@ -46,6 +46,19 @@ public class TarefaService {
     }
 
     @Transactional
+    public void concluirTarefa(Long id) {
+        Tarefa tarefa = tarefaRepository.findById(id)
+                .orElseThrow(() -> new TarefaNaoEncontradaException(id));
+
+        tarefa.setSituacao(Situacao.CONCLUIDA);
+        tarefaRepository.save(tarefa);
+    }
+
+    public List<Tarefa> listarPorSituacao(Situacao situacao) {
+        return tarefaRepository.findBySituacao(situacao);
+    }
+
+    @Transactional
     public void deletarTarefa(Long id) {
         if (!tarefaRepository.existsById(id)) {
             throw new TarefaNaoEncontradaException(id);

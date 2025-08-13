@@ -99,7 +99,7 @@ class TarefaControllerTest {
     void deletarTarefa_DeveRetornar204() throws Exception {
 
         doNothing().when(tarefaService).deletarTarefa(ID_VALIDO);
-        
+
         mockMvc.perform(delete("/tarefas/{id}", ID_VALIDO))
                 .andExpect(status().isNoContent());
 

@@ -1,6 +1,7 @@
 package org.projeto.gerenciadortarefa.controller;
 
 import org.projeto.gerenciadortarefa.dto.TarefaDTO;
+import org.projeto.gerenciadortarefa.model.Situacao;
 import org.projeto.gerenciadortarefa.model.Tarefa;
 import org.projeto.gerenciadortarefa.service.TarefaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/tarefas")
+@RequestMapping("/api/tarefas")
 public class TarefaController {
 
     @Autowired
@@ -42,6 +43,42 @@ public class TarefaController {
         Tarefa tarefa = dto.toEntity();
         Tarefa tarefaAtualizada = tarefaService.atualizarTarefa(id, tarefa);
         return ResponseEntity.ok(TarefaDTO.fromEntity(tarefaAtualizada));
+    }
+
+    @PatchMapping("/{id}/concluir")
+    public ResponseEntity<Void> concluirTarefa(@PathVariable Long id) {
+        tarefaService.concluirTarefa(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/filtro")
+    public ResponseEntity<List<TarefaDTO>> listarFiltradas(
+            @RequestParam(required = false) String situacao,
+            @RequestParam(required = false) String search) {
+
+        List<Tarefa> tarefas;
+
+        if ("CONCLUIDA".equalsIgnoreCase(situacao)) {
+            tarefas = tarefaService.listarPorSituacao(Situacao.CONCLUIDA);
+        } else if ("EM_ANDAMENTO".equalsIgnoreCase(situacao)) {
+            tarefas = tarefaService.listarPorSituacao(Situacao.EM_ANDAMENTO);
+        } else {
+            tarefas = tarefaService.listarTodasTarefas();
+        }
+
+        if (search != null && !search.isEmpty()) {
+            final String termo = search.toLowerCase();
+            tarefas = tarefas.stream()
+                    .filter(t -> t.getTitulo().toLowerCase().contains(termo) ||
+                            t.getResponsavel().toLowerCase().contains(termo))
+                    .collect(Collectors.toList());
+        }
+
+        List<TarefaDTO> dtos = tarefas.stream()
+                .map(TarefaDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 
     @DeleteMapping("/{id}")
