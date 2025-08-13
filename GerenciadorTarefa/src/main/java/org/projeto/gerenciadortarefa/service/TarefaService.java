@@ -30,6 +30,11 @@ public class TarefaService {
         return tarefaRepository.findAll();
     }
 
+    public Tarefa buscarPorId(Long id) {
+        return tarefaRepository.findById(id)
+                .orElseThrow(() -> new TarefaNaoEncontradaException(id));
+    }
+
     @Transactional
     public Tarefa atualizarTarefa(Long id, Tarefa tarefaAtualizada) {
         return tarefaRepository.findById(id)

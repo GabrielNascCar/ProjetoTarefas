@@ -17,6 +17,9 @@
         <div class="card">
             <h2>Adicionar Nova Tarefa</h2>
             <form id="taskForm">
+
+                <input type="hidden" id="taskId">
+
                 <div class="form-group">
                     <label for="titulo">Título*</label>
                     <input type="text" id="titulo" required>
@@ -45,11 +48,13 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="deadline">Prazo*</label>
-                        <input type="date" id="deadline" required>
+                        <label for="deadline">Prazo</label>
+                        <input type="date" id="deadline">
                     </div>
 
-                    <button type="submit" class="btn-primary">Salvar Tarefa</button>
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary">Salvar Tarefa</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -68,7 +73,7 @@
             </div>
 
             <div id="taskList" class="task-list">
-
+                <!-- As tarefas serão carregadas aqui dinamicamente -->
             </div>
         </div>
     </div>

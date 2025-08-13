@@ -151,3 +151,27 @@ button {
         flex-direction: column;
     }
 }
+
+.btn-update {
+    background-color: var(--success-color) !important;
+}
+
+.btn-cancel {
+    background-color: var(--danger-color);
+}
+
+.editing-mode .btn-primary {
+    display: none;
+}
+
+.editing-mode .btn-update {
+    display: inline-block;
+}
+
+.editing-mode .btn-cancel {
+    display: inline-block;
+}
+
+.task-card.editing {
+    box-shadow: 0 0 0 2px var(--success-color);
+}

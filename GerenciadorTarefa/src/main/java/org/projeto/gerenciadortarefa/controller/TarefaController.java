@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH})
 @RestController
 @RequestMapping("/api/tarefas")
 public class TarefaController {
@@ -25,6 +25,12 @@ public class TarefaController {
         Tarefa tarefa = dto.toEntity();
         Tarefa novaTarefa = tarefaService.criarTarefa(tarefa);
         return ResponseEntity.status(HttpStatus.CREATED).body(TarefaDTO.fromEntity(novaTarefa));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TarefaDTO> getTarefaPorId(@PathVariable Long id) {
+        Tarefa tarefa = tarefaService.buscarPorId(id);
+        return ResponseEntity.ok(TarefaDTO.fromEntity(tarefa));
     }
 
     @GetMapping
