@@ -37,4 +37,12 @@ public class TarefaService {
         return tarefaRepository.save(tarefa);
     }
 
+    @Transactional
+    public void deletarTarefa(Long id) {
+        if (!tarefaRepository.existsById(id)) {
+            throw new RuntimeException("Tarefa não encontrada");
+        }
+        tarefaRepository.deleteById(id);
+    }
+
 }
