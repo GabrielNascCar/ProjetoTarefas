@@ -28,4 +28,12 @@ public class TarefaController {
         List<Tarefa> tarefas = tarefaService.listarTodasTarefas();
         return ResponseEntity.ok(tarefas);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Tarefa> atualizarTarefa(
+            @PathVariable Long id,
+            @RequestBody Tarefa tarefaAtualizada) {
+        Tarefa tarefa = tarefaService.atualizarTarefa(id, tarefaAtualizada);
+        return ResponseEntity.ok(tarefa);
+    }
 }

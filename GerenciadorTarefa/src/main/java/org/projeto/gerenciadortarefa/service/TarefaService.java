@@ -24,4 +24,17 @@ public class TarefaService {
     public List<Tarefa> listarTodasTarefas() {
         return tarefaRepository.findAll();
     }
+
+    @Transactional
+    public Tarefa atualizarTarefa(Long id, Tarefa tarefaAtualizada) {
+        Tarefa tarefa = tarefaRepository.findById(id).orElseThrow();
+        tarefa.setTitulo(tarefaAtualizada.getTitulo());
+        tarefa.setSituacao(tarefaAtualizada.getSituacao());
+        tarefa.setDescricao(tarefaAtualizada.getDescricao());
+        tarefa.setDeadline(tarefaAtualizada.getDeadline());
+        tarefa.setPrioridade(tarefaAtualizada.getPrioridade());
+        tarefa.setResponsavel(tarefaAtualizada.getResponsavel());
+        return tarefaRepository.save(tarefa);
+    }
+
 }
