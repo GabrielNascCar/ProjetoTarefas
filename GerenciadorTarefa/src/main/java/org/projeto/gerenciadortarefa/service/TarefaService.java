@@ -7,6 +7,8 @@ import org.projeto.gerenciadortarefa.repository.TarefaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TarefaService {
 
@@ -17,5 +19,9 @@ public class TarefaService {
     public Tarefa criarTarefa(Tarefa tarefa) {
         tarefa.setSituacao(Situacao.EM_ANDAMENTO);
         return tarefaRepository.save(tarefa);
+    }
+
+    public List<Tarefa> listarTodasTarefas() {
+        return tarefaRepository.findAll();
     }
 }
