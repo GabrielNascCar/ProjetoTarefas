@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskList = document.getElementById('taskList');
     const filterStatus = document.getElementById('filterStatus');
     const searchInput = document.getElementById('searchInput');
-
+    const submitButton = document.getElementById('submitButton') || taskForm.querySelector('button[type="submit"]');
+    
     loadTasks = async function() {
         const situacao = filterStatus.value;
         const search = searchInput.value.trim().toLowerCase();
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             taskList.innerHTML = `<p class="error-message">${error.message || 'Erro ao carregar tarefas'}</p>`;
         }
     };
+
     function renderTasks(tasks) {
         taskList.innerHTML = '';
 
@@ -118,6 +120,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function updateTask(id) {
+        const titulo = document.getElementById('titulo').value.trim();
+        const descricao = document.getElementById('descricao').value.trim();
+        const responsavel = document.getElementById('responsavel').value.trim();
+        const prioridade = document.getElementById('prioridade').value;
+        const deadline = document.getElementById('deadline').value;
+
+        if (!titulo || !responsavel || !prioridade) {
+            alert('Preencha todos os campos obrigatórios (Título, Responsável e Prioridade)');
+            return;
+        }
+
+        const taskData = {
+            titulo: titulo,
+            descricao: descricao || null,
+            responsavel: responsavel,
+            prioridade: prioridade,
+            deadline: deadline || null
+        };
+
+        console.log(`Enviando PUT para ${API_BASE_URL}/${id} com dados:`, taskData);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(taskData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erro ao atualizar tarefa');
+            }
+
+            cancelEdit();
+            await loadTasks();
+            alert('Tarefa atualizada com sucesso!');
+        } catch (error) {
+            console.error('Erro:', error);
+            alert(error.message || 'Erro ao atualizar tarefa');
+        }
+    }
+
     function formatPriority(priority) {
         const priorities = {
             'ALTA': 'Alta',
@@ -140,13 +187,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return priority ? `priority-${priority.toLowerCase()}` : 'priority-none';
     }
 
-    loadTasks();
     taskForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        createTask();
+        const taskId = document.getElementById('taskId').value;
+        if (taskId) {
+            updateTask(taskId);
+        } else {
+            createTask();
+        }
     });
+
     filterStatus.addEventListener('change', loadTasks);
     searchInput.addEventListener('input', loadTasks);
+
+    loadTasks();
 });
 
 async function completeTask(id) {
@@ -162,7 +216,7 @@ async function completeTask(id) {
             throw new Error(errorText || 'Erro ao concluir tarefa');
         }
 
-        location.reload();
+        loadTasks();
     } catch (error) {
         console.error('Erro:', error);
         alert(error.message || 'Erro ao concluir tarefa');
@@ -182,7 +236,7 @@ async function deleteTask(id) {
             throw new Error(errorText || 'Erro ao excluir tarefa');
         }
 
-        location.reload();
+        loadTasks();
     } catch (error) {
         console.error('Erro:', error);
         alert(error.message || 'Erro ao excluir tarefa');
@@ -191,27 +245,51 @@ async function deleteTask(id) {
 
 async function editTask(id) {
     try {
-        const response = await fetch(`${API_BASE_URL}/${id}`);
+        console.log(`Iniciando edição da tarefa ID: ${id}`);
+
+        // Busca os dados da tarefa
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
 
         if (!response.ok) {
-            throw new Error('Erro ao carregar tarefa para edição');
+            const errorText = await response.text();
+            throw new Error(errorText || 'Erro ao carregar tarefa para edição');
         }
 
         const task = await response.json();
+        console.log('Dados recebidos para edição:', task);
 
         document.getElementById('taskId').value = task.id;
         document.getElementById('titulo').value = task.titulo;
         document.getElementById('descricao').value = task.descricao || '';
         document.getElementById('responsavel').value = task.responsavel;
         document.getElementById('prioridade').value = task.prioridade;
-        document.getElementById('deadline').value = task.deadline ? task.deadline.split('T')[0] : '';
+
+        const deadlineInput = document.getElementById('deadline');
+        if (task.deadline) {
+            const deadlineDate = new Date(task.deadline);
+            if (!isNaN(deadlineDate.getTime())) {
+                deadlineInput.value = deadlineDate.toISOString().split('T')[0];
+            } else {
+                console.warn('Data inválida recebida:', task.deadline);
+                deadlineInput.value = '';
+            }
+        } else {
+            deadlineInput.value = '';
+        }
 
         enableEditMode();
-        document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+        document.querySelector('.card').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
 
     } catch (error) {
-        console.error('Erro ao editar tarefa:', error);
-        alert('Erro ao carregar tarefa: ' + error.message);
+        console.error('Erro detalhado ao editar tarefa:', error);
+        alert(`Erro ao carregar tarefa para edição: ${error.message}`);
     }
 }
 
@@ -219,18 +297,20 @@ function enableEditMode() {
     const form = document.getElementById('taskForm');
     form.classList.add('editing-mode');
 
-    const submitButton = form.querySelector('button[type="submit"]');
+    const submitButton = document.getElementById('submitButton') || form.querySelector('button[type="submit"]');
     submitButton.textContent = 'Atualizar Tarefa';
     submitButton.classList.add('btn-update');
 
-    const cancelButton = document.createElement('button');
-    cancelButton.type = 'button';
-    cancelButton.textContent = 'Cancelar';
-    cancelButton.classList.add('btn-cancel');
-    cancelButton.onclick = cancelEdit;
+    if (!document.querySelector('.btn-cancel')) {
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.textContent = 'Cancelar';
+        cancelButton.classList.add('btn-cancel');
+        cancelButton.onclick = cancelEdit;
 
-    const formRow = form.querySelector('.form-row');
-    formRow.appendChild(cancelButton);
+        const formRow = form.querySelector('.form-row');
+        formRow.appendChild(cancelButton);
+    }
 
     const taskId = document.getElementById('taskId').value;
     document.querySelector(`.task-card[data-id="${taskId}"]`)?.classList.add('editing');
@@ -239,9 +319,10 @@ function enableEditMode() {
 function cancelEdit() {
     const form = document.getElementById('taskForm');
     form.reset();
+    document.getElementById('taskId').value = '';
     form.classList.remove('editing-mode');
 
-    const submitButton = form.querySelector('button[type="submit"]');
+    const submitButton = document.getElementById('submitButton') || form.querySelector('button[type="submit"]');
     submitButton.textContent = 'Salvar Tarefa';
     submitButton.classList.remove('btn-update');
 
@@ -252,47 +333,4 @@ function cancelEdit() {
 
     const taskId = document.getElementById('taskId').value;
     document.querySelector(`.task-card[data-id="${taskId}"]`)?.classList.remove('editing');
-}
-
-async function updateTask(id) {
-    const titulo = document.getElementById('titulo').value.trim();
-    const descricao = document.getElementById('descricao').value.trim();
-    const responsavel = document.getElementById('responsavel').value.trim();
-    const prioridade = document.getElementById('prioridade').value;
-    const deadline = document.getElementById('deadline').value;
-
-    if (!titulo || !responsavel || !prioridade) {
-        alert('Preencha todos os campos obrigatórios (Título, Responsável e Prioridade)');
-        return;
-    }
-
-    const taskData = {
-        titulo: titulo,
-        descricao: descricao || null,
-        responsavel: responsavel,
-        prioridade: prioridade,
-        deadline: deadline || null
-    };
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(taskData)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Erro ao atualizar tarefa');
-        }
-
-        cancelEdit();
-        await loadTasks();
-        alert('Tarefa atualizada com sucesso!');
-    } catch (error) {
-        console.error('Erro:', error);
-        alert(error.message || 'Erro ao atualizar tarefa');
-    }
 }
