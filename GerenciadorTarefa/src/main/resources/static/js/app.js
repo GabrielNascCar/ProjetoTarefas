@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterStatus = document.getElementById('filterStatus');
     const searchInput = document.getElementById('searchInput');
     const submitButton = document.getElementById('submitButton') || taskForm.querySelector('button[type="submit"]');
-    
+
     loadTasks = async function() {
         const situacao = filterStatus.value;
         const search = searchInput.value.trim().toLowerCase();
